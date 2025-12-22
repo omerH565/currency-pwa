@@ -3,178 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ממיר מטבעות גלובלי</title>
+    <title>ממיר מטבעות פרו</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <style>
         :root {
-            --primary-color: #007AFF;
-            --bg-color: #f2f2f7;
-            --card-bg: #ffffff;
+            --primary: #007AFF;
+            --bg: #f2f2f7;
+            --card: #ffffff;
+            --text: #1c1c1e;
+            --active-bg: #e5f1ff;
+            --danger: #ff3b30;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            margin: 0;
-            padding: 20px;
-            color: #1c1c1e;
+            font-family: -apple-system, system-ui, sans-serif;
+            background-color: var(--bg);
+            margin: 0; padding: 20px; color: var(--text);
+            -webkit-tap-highlight-color: transparent;
         }
 
         .container { max-width: 500px; margin: 0 auto; }
+        h1 { font-size: 22px; text-align: center; margin-bottom: 20px; }
 
-        h1 { font-size: 24px; text-align: center; margin-bottom: 20px; }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        .amount-section {
+            background: var(--card);
+            border-radius: 15px;
+            padding: 20px;
             margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            text-align: center;
         }
 
-        label { display: block; font-size: 14px; color: #8e8e93; margin-bottom: 8px; }
-
-        select, input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #d1d1d6;
-            border-radius: 8px;
-            font-size: 18px;
-            box-sizing: border-box;
-            margin-bottom: 15px;
+        input#amount {
+            width: 100%; border: none; font-size: 48px; font-weight: bold;
+            text-align: center; outline: none; background: transparent; color: var(--primary);
         }
 
-        .currency-row {
+        .label { font-size: 14px; color: #8e8e93; margin-bottom: 5px; display: block; }
+
+        .currency-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid #f2f2f7;
-        }
-
-        .currency-info { display: flex; align-items: center; gap: 10px; }
-        .flag { font-size: 24px; }
-        .code { font-weight: bold; }
-        .result { font-size: 18px; color: #3a3a3c; }
-
-        .btn-add {
-            background: none;
-            border: none;
-            color: var(--primary-color);
-            font-size: 24px;
+            position: relative;
+            transition: all 0.2s;
+            border: 2px solid transparent;
             cursor: pointer;
         }
 
-        .btn-remove { color: #ff3b30; background: none; border: none; cursor: pointer; }
+        .currency-card.active {
+            border-color: var(--primary);
+            background-color: var(--active-bg);
+        }
+
+        .info { display: flex; align-items: center; gap: 15px; }
+        .flag { font-size: 30px; }
+        .details { display: flex; flex-direction: column; }
+        .code { font-weight: bold; font-size: 18px; }
+        .result-val { font-size: 20px; font-weight: 600; }
+
+        /* כפתור מחיקה */
+        .btn-delete {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 10;
+            display: none; /* מוסתר כברירת מחדל */
+        }
+
+        /* הצגת כפתור מחיקה רק במועדפים שהם לא הבסיס */
+        .currency-card:not(.active) .btn-delete {
+            display: flex;
+        }
+
+        .search-box {
+            background: #e3e3e8; border-radius: 10px; padding: 10px;
+            margin-top: 30px; display: flex; gap: 10px;
+        }
+        .search-box input { background: none; border: none; outline: none; width: 100%; font-size: 16px; }
+
+        .all-currencies { margin-top: 10px; max-height: 250px; overflow-y: auto; }
+        .add-row {
+            display: flex; justify-content: space-between; padding: 12px;
+            border-bottom: 1px solid #d1d1d6; align-items: center;
+        }
+        .btn-add { background: none; border: none; font-size: 20px; color: var(--primary); }
+
+        .loading-overlay {
+            position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.7); color: white; padding: 5px 15px;
+            border-radius: 20px; font-size: 12px; display: none; z-index: 100;
+        }
     </style>
 </head>
 <body>
 
+<div id="loader" class="loading-overlay">מעדכן שערים...</div>
+
 <div class="container">
-    <h1>ממיר מטבעות 🌍</h1>
+    <h1>ממיר מטבעות גלובלי 🌍</h1>
 
-    <div class="card">
-        <label>מטבע מקור וסכום</label>
-        <select id="baseCurrency" onchange="updateRates()"></select>
-        <input type="number" id="amount" value="100" oninput="calculateResults()" placeholder="הכנס סכום...">
+    <div class="amount-section">
+        <span class="label">הכנס סכום להמרה</span>
+        <input type="number" id="amount" value="100" oninput="calculate()">
     </div>
 
-    <div class="card">
-        <label>מועדפים</label>
-        <div id="favoritesList"></div>
+    <div id="favoritesList"></div>
+
+    <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="search" placeholder="חפש מטבע להוספה..." oninput="renderAll()">
     </div>
 
-    <div class="card">
-        <label>הוסף מטבעות</label>
-        <div id="allCurrenciesList"></div>
-    </div>
+    <div class="all-currencies" id="allList"></div>
 </div>
 
 <script>
-    const flags = { "USD": "🇺🇸", "EUR": "🇪🇺", "ILS": "🇮🇱", "GBP": "🇬🇧", "JPY": "🇯🇵", "CAD": "🇨🇦", "AUD": "🇦🇺", "CHF": "🇨🇭" };
-    const availableCurrencies = Object.keys(flags);
-    
-    // שליפת נתונים מ-LocalStorage
-    let favorites = JSON.parse(localStorage.getItem('favs')) || ["USD", "EUR"];
-    let currentBase = localStorage.getItem('base') || "ILS";
-    let cachedRates = {};
+    const currencyData = {
+        "ILS": {flag: "🇮🇱", name: "שקל חדש"}, "USD": {flag: "🇺🇸", name: "דולר אמריקאי"},
+        "EUR": {flag: "🇪🇺", name: "אירו"}, "GBP": {flag: "🇬🇧", name: "ליש\"ט"},
+        "JPY": {flag: "🇯🇵", name: "יין יפני"}, "CAD": {flag: "🇨🇦", name: "דולר קנדי"},
+        "AUD": {flag: "🇦🇺", name: "דולר אוסטרלי"}, "CHF": {flag: "🇨🇭", name: "פרנק שוויצרי"},
+        "CNY": {flag: "🇨🇳", name: "יואן סיני"}, "SEK": {flag: "🇸🇪", name: "קרונה שוודית"},
+        "NZD": {flag: "🇳🇿", name: "דולר ניו זילנדי"}, "THB": {flag: "🇹🇭", name: "באט תאילנדי"},
+        "SGD": {flag: "🇸🇬", name: "דולר סינגפורי"}, "TRY": {flag: "🇹🇷", name: "לירה טורקית"},
+        "INR": {flag: "🇮🇳", name: "רופי הודי"}, "MXN": {flag: "🇲🇽", name: "פסו מקסיקני"}
+    };
 
-    // אתחול רשימת המטבעות ב-Select
-    const select = document.getElementById('baseCurrency');
-    availableCurrencies.forEach(curr => {
-        let opt = document.createElement('option');
-        opt.value = curr;
-        opt.text = `${flags[curr]} ${curr}`;
-        if(curr === currentBase) opt.selected = true;
-        select.appendChild(opt);
-    });
+    let favorites = JSON.parse(localStorage.getItem('favs_pro')) || ["ILS", "USD", "EUR"];
+    let baseCurrency = localStorage.getItem('base_pro') || "ILS";
+    let rates = {};
 
-    async function updateRates() {
-        currentBase = document.getElementById('baseCurrency').value;
-        localStorage.setItem('base', currentBase);
-        
+    async function fetchRates() {
+        document.getElementById('loader').style.display = 'block';
         try {
-            const res = await fetch(`https://api.frankfurter.app/latest?from=${currentBase}`);
+            const res = await fetch(`https://api.frankfurter.app/latest?from=${baseCurrency}`);
             const data = await res.json();
-            cachedRates = data.rates;
-            calculateResults();
+            rates = data.rates;
+            rates[baseCurrency] = 1;
+            renderFavorites();
         } catch (e) {
-            console.error("שגיאה בטעינת נתונים");
+            console.error("שגיאה בטעינה");
         }
+        document.getElementById('loader').style.display = 'none';
     }
 
-    function calculateResults() {
+    function renderFavorites() {
+        const container = document.getElementById('favoritesList');
+        container.innerHTML = '';
         const amount = document.getElementById('amount').value || 0;
-        const favContainer = document.getElementById('favoritesList');
-        const allContainer = document.getElementById('allCurrenciesList');
-        
-        favContainer.innerHTML = '';
-        allContainer.innerHTML = '';
 
-        availableCurrencies.forEach(curr => {
-            if (curr === currentBase) return;
-
-            const rate = cachedRates[curr] || 0;
-            const converted = (amount * rate).toFixed(2);
+        favorites.forEach(code => {
+            const data = currencyData[code] || {flag: "🏳️", name: code};
+            const val = rates[code] ? (amount * rates[code]).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '---';
             
-            const row = `
-                <div class="currency-row">
-                    <div class="currency-info">
-                        <span class="flag">${flags[curr]}</span>
-                        <span class="code">${curr}</span>
-                    </div>
-                    <div class="currency-info">
-                        <span class="result">${rate ? converted : '---'}</span>
-                        ${favorites.includes(curr) 
-                            ? `<button class="btn-remove" onclick="toggleFav('${curr}')">✕</button>` 
-                            : `<button class="btn-add" onclick="toggleFav('${curr}')">+</button>`}
+            const card = document.createElement('div');
+            card.className = `currency-card ${code === baseCurrency ? 'active' : ''}`;
+            card.onclick = () => setBase(code);
+            
+            card.innerHTML = `
+                <button class="btn-delete" onclick="removeFav(event, '${code}')">✕</button>
+                <div class="info">
+                    <span class="flag">${data.flag}</span>
+                    <div class="details">
+                        <span class="code">${code}</span>
+                        <span style="font-size:11px; color:#8e8e93">${data.name}</span>
                     </div>
                 </div>
+                <div class="value-area">
+                    <span class="result-val">${val}</span>
+                </div>
             `;
-
-            if (favorites.includes(curr)) {
-                favContainer.innerHTML += row;
-            } else {
-                allContainer.innerHTML += row;
-            }
+            container.appendChild(card);
         });
-        
-        localStorage.setItem('favs', JSON.stringify(favorites));
+        localStorage.setItem('favs_pro', JSON.stringify(favorites));
     }
 
-    function toggleFav(curr) {
-        if (favorites.includes(curr)) {
-            favorites = favorites.filter(f => f !== curr);
-        } else {
-            favorites.push(curr);
+    function renderAll() {
+        const query = document.getElementById('search').value.toUpperCase();
+        const container = document.getElementById('allList');
+        container.innerHTML = '';
+
+        Object.keys(currencyData).forEach(code => {
+            if (favorites.includes(code)) return;
+            if (query && !code.includes(query) && !currencyData[code].name.includes(query)) return;
+
+            const div = document.createElement('div');
+            div.className = 'add-row';
+            div.innerHTML = `
+                <div class="info">
+                    <span>${currencyData[code].flag}</span>
+                    <span>${code} - ${currencyData[code].name}</span>
+                </div>
+                <button class="btn-add" onclick="addFav('${code}')">+</button>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function setBase(code) {
+        baseCurrency = code;
+        localStorage.setItem('base_pro', baseCurrency);
+        fetchRates();
+    }
+
+    function addFav(code) {
+        if (!favorites.includes(code)) {
+            favorites.push(code);
+            renderFavorites();
+            renderAll();
         }
-        calculateResults();
     }
 
-    // טעינה ראשונית
-    updateRates();
+    function removeFav(event, code) {
+        event.stopPropagation(); // מונע מהלחיצה להפוך את המטבע לבסיס לפני המחיקה
+        favorites = favorites.filter(f => f !== code);
+        renderFavorites();
+        renderAll();
+    }
+
+    function calculate() {
+        renderFavorites();
+    }
+
+    fetchRates();
+    renderAll();
 </script>
 
 </body>
