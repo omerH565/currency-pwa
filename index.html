@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ממיר מטבעות גלובלי</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <style>
+        :root {
+            --primary-color: #007AFF;
+            --bg-color: #f2f2f7;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: #1c1c1e;
+        }
+
+        .container { max-width: 500px; margin: 0 auto; }
+
+        h1 { font-size: 24px; text-align: center; margin-bottom: 20px; }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        label { display: block; font-size: 14px; color: #8e8e93; margin-bottom: 8px; }
+
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d1d6;
+            border-radius: 8px;
+            font-size: 18px;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+        }
+
+        .currency-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f2f2f7;
+        }
+
+        .currency-info { display: flex; align-items: center; gap: 10px; }
+        .flag { font-size: 24px; }
+        .code { font-weight: bold; }
+        .result { font-size: 18px; color: #3a3a3c; }
+
+        .btn-add {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .btn-remove { color: #ff3b30; background: none; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>ממיר מטבעות 🌍</h1>
+
+    <div class="card">
+        <label>מטבע מקור וסכום</label>
+        <select id="baseCurrency" onchange="updateRates()"></select>
+        <input type="number" id="amount" value="100" oninput="calculateResults()" placeholder="הכנס סכום...">
+    </div>
+
+    <div class="card">
+        <label>מועדפים</label>
+        <div id="favoritesList"></div>
+    </div>
+
+    <div class="card">
+        <label>הוסף מטבעות</label>
+        <div id="allCurrenciesList"></div>
+    </div>
+</div>
+
+<script>
+    const flags = { "USD": "🇺🇸", "EUR": "🇪🇺", "ILS": "🇮🇱", "GBP": "🇬🇧", "JPY": "🇯🇵", "CAD": "🇨🇦", "AUD": "🇦🇺", "CHF": "🇨🇭" };
+    const availableCurrencies = Object.keys(flags);
+    
+    // שליפת נתונים מ-LocalStorage
+    let favorites = JSON.parse(localStorage.getItem('favs')) || ["USD", "EUR"];
+    let currentBase = localStorage.getItem('base') || "ILS";
+    let cachedRates = {};
+
+    // אתחול רשימת המטבעות ב-Select
+    const select = document.getElementById('baseCurrency');
+    availableCurrencies.forEach(curr => {
+        let opt = document.createElement('option');
+        opt.value = curr;
+        opt.text = `${flags[curr]} ${curr}`;
+        if(curr === currentBase) opt.selected = true;
+        select.appendChild(opt);
+    });
+
+    async function updateRates() {
+        currentBase = document.getElementById('baseCurrency').value;
+        localStorage.setItem('base', currentBase);
+        
+        try {
+            const res = await fetch(`https://api.frankfurter.app/latest?from=${currentBase}`);
+            const data = await res.json();
+            cachedRates = data.rates;
+            calculateResults();
+        } catch (e) {
+            console.error("שגיאה בטעינת נתונים");
+        }
+    }
+
+    function calculateResults() {
+        const amount = document.getElementById('amount').value || 0;
+        const favContainer = document.getElementById('favoritesList');
+        const allContainer = document.getElementById('allCurrenciesList');
+        
+        favContainer.innerHTML = '';
+        allContainer.innerHTML = '';
+
+        availableCurrencies.forEach(curr => {
+            if (curr === currentBase) return;
+
+            const rate = cachedRates[curr] || 0;
+            const converted = (amount * rate).toFixed(2);
+            
+            const row = `
+                <div class="currency-row">
+                    <div class="currency-info">
+                        <span class="flag">${flags[curr]}</span>
+                        <span class="code">${curr}</span>
+                    </div>
+                    <div class="currency-info">
+                        <span class="result">${rate ? converted : '---'}</span>
+                        ${favorites.includes(curr) 
+                            ? `<button class="btn-remove" onclick="toggleFav('${curr}')">✕</button>` 
+                            : `<button class="btn-add" onclick="toggleFav('${curr}')">+</button>`}
+                    </div>
+                </div>
+            `;
+
+            if (favorites.includes(curr)) {
+                favContainer.innerHTML += row;
+            } else {
+                allContainer.innerHTML += row;
+            }
+        });
+        
+        localStorage.setItem('favs', JSON.stringify(favorites));
+    }
+
+    function toggleFav(curr) {
+        if (favorites.includes(curr)) {
+            favorites = favorites.filter(f => f !== curr);
+        } else {
+            favorites.push(curr);
+        }
+        calculateResults();
+    }
+
+    // טעינה ראשונית
+    updateRates();
+</script>
+
+</body>
+</html>
