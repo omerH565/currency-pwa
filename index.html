@@ -3,250 +3,236 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ממיר מטבעות פרו</title>
+    <title>Currency Liquid</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <style>
         :root {
+            --glass: rgba(255, 255, 255, 0.2);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --text: #ffffff;
             --primary: #007AFF;
-            --bg: #f2f2f7;
-            --card: #ffffff;
-            --text: #1c1c1e;
-            --active-bg: #e5f1ff;
-            --danger: #ff3b30;
         }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
+            margin: 0;
             font-family: -apple-system, system-ui, sans-serif;
-            background-color: var(--bg);
-            margin: 0; padding: 20px; color: var(--text);
-            -webkit-tap-highlight-color: transparent;
+            background: linear-gradient(45deg, #0f0c29, #302b63, #24243e);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: var(--text);
+            overflow: hidden;
         }
 
-        .container { max-width: 500px; margin: 0 auto; }
-        h1 { font-size: 22px; text-align: center; margin-bottom: 20px; }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
 
-        .amount-section {
-            background: var(--card);
-            border-radius: 15px;
+        .container {
             padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* תצוגת סכום */
+        .display-area {
             text-align: center;
+            padding: 30px 0;
         }
 
-        input#amount {
-            width: 100%; border: none; font-size: 48px; font-weight: bold;
-            text-align: center; outline: none; background: transparent; color: var(--primary);
+        .amount-display {
+            font-size: 56px;
+            font-weight: 200;
+            margin: 0;
+            min-height: 70px;
         }
 
-        .label { font-size: 14px; color: #8e8e93; margin-bottom: 5px; display: block; }
+        .base-label {
+            font-size: 14px;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
 
-        .currency-card {
-            background: var(--card);
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 10px;
+        /* גריד המדינות */
+        .favorites-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            overflow-y: auto;
+            padding-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .liquid-card {
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 20px;
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: relative;
-            transition: all 0.2s;
-            border: 2px solid transparent;
-            cursor: pointer;
-        }
-
-        .currency-card.active {
-            border-color: var(--primary);
-            background-color: var(--active-bg);
-        }
-
-        .info { display: flex; align-items: center; gap: 15px; }
-        .flag { font-size: 30px; }
-        .details { display: flex; flex-direction: column; }
-        .code { font-weight: bold; font-size: 18px; }
-        .result-val { font-size: 20px; font-weight: 600; }
-
-        /* כפתור מחיקה */
-        .btn-delete {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: var(--danger);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 22px;
-            height: 22px;
-            font-size: 12px;
-            display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.2s, background 0.2s;
+            position: relative;
+        }
+
+        .liquid-card.active {
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid #fff;
+            transform: scale(1.02);
+        }
+
+        .liquid-card .flag { font-size: 32px; margin-bottom: 8px; }
+        .liquid-card .code { font-weight: bold; font-size: 18px; }
+        .liquid-card .val { font-size: 16px; opacity: 0.9; margin-top: 4px; }
+
+        .btn-del {
+            position: absolute; top: 8px; right: 8px;
+            background: rgba(255,0,0,0.3); border: none; border-radius: 50%;
+            width: 20px; height: 20px; color: white; font-size: 10px;
+            display: none; align-items: center; justify-content: center;
+        }
+        .liquid-card:not(.active):hover .btn-del { display: flex; }
+
+        /* לוח מקשים ליקוויד */
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(20px);
+            border-radius: 30px 30px 0 0;
+            margin: 0 -20px -20px -20px;
+        }
+
+        .key {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 15px;
+            font-size: 20px;
+            font-weight: 500;
+            color: white;
+            text-align: center;
             cursor: pointer;
-            z-index: 10;
-            display: none; /* מוסתר כברירת מחדל */
+            transition: background 0.1s;
         }
 
-        /* הצגת כפתור מחיקה רק במועדפים שהם לא הבסיס */
-        .currency-card:not(.active) .btn-delete {
-            display: flex;
-        }
+        .key:active { background: rgba(255, 255, 255, 0.4); }
+        .key.action { background: rgba(255, 255, 255, 0.1); color: #ff9500; }
+        .key.delete { color: #ff3b30; }
 
-        .search-box {
-            background: #e3e3e8; border-radius: 10px; padding: 10px;
-            margin-top: 30px; display: flex; gap: 10px;
-        }
-        .search-box input { background: none; border: none; outline: none; width: 100%; font-size: 16px; }
-
-        .all-currencies { margin-top: 10px; max-height: 250px; overflow-y: auto; }
-        .add-row {
-            display: flex; justify-content: space-between; padding: 12px;
-            border-bottom: 1px solid #d1d1d6; align-items: center;
-        }
-        .btn-add { background: none; border: none; font-size: 20px; color: var(--primary); }
-
-        .loading-overlay {
-            position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.7); color: white; padding: 5px 15px;
-            border-radius: 20px; font-size: 12px; display: none; z-index: 100;
-        }
+        /* הוספה */
+        .add-btn { grid-column: span 2; background: var(--primary); border: none; border-radius: 12px; color: white; padding: 10px; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div id="loader" class="loading-overlay">מעדכן שערים...</div>
-
 <div class="container">
-    <h1>ממיר מטבעות גלובלי 🌍</h1>
-
-    <div class="amount-section">
-        <span class="label">הכנס סכום להמרה</span>
-        <input type="number" id="amount" value="100" oninput="calculate()">
+    <div class="display-area">
+        <div class="base-label" id="baseLabel">שקל חדש</div>
+        <div class="amount-display" id="display">100</div>
     </div>
 
-    <div id="favoritesList"></div>
+    <div class="favorites-grid" id="grid"></div>
 
-    <div class="search-box">
-        <span>🔍</span>
-        <input type="text" id="search" placeholder="חפש מטבע להוספה..." oninput="renderAll()">
+    <div class="keypad">
+        <div class="key" onclick="press('1')">1</div>
+        <div class="key" onclick="press('2')">2</div>
+        <div class="key" onclick="press('3')">3</div>
+        <div class="key" onclick="press('4')">4</div>
+        <div class="key" onclick="press('5')">5</div>
+        <div class="key" onclick="press('6')">6</div>
+        <div class="key" onclick="press('7')">7</div>
+        <div class="key" onclick="press('8')">8</div>
+        <div class="key" onclick="press('9')">9</div>
+        <div class="key action" onclick="press('.')">.</div>
+        <div class="key" onclick="press('0')">0</div>
+        <div class="key delete" onclick="press('DEL')">⌫</div>
+        <div class="key action" style="grid-column: span 3;" onclick="press('AC')">איפוס (AC)</div>
     </div>
-
-    <div class="all-currencies" id="allList"></div>
 </div>
 
 <script>
     const currencyData = {
         "ILS": {flag: "🇮🇱", name: "שקל חדש"}, "USD": {flag: "🇺🇸", name: "דולר אמריקאי"},
         "EUR": {flag: "🇪🇺", name: "אירו"}, "GBP": {flag: "🇬🇧", name: "ליש\"ט"},
-        "JPY": {flag: "🇯🇵", name: "יין יפני"}, "CAD": {flag: "🇨🇦", name: "דולר קנדי"},
-        "AUD": {flag: "🇦🇺", name: "דולר אוסטרלי"}, "CHF": {flag: "🇨🇭", name: "פרנק שוויצרי"},
-        "CNY": {flag: "🇨🇳", name: "יואן סיני"}, "SEK": {flag: "🇸🇪", name: "קרונה שוודית"},
-        "NZD": {flag: "🇳🇿", name: "דולר ניו זילנדי"}, "THB": {flag: "🇹🇭", name: "באט תאילנדי"},
-        "SGD": {flag: "🇸🇬", name: "דולר סינגפורי"}, "TRY": {flag: "🇹🇷", name: "לירה טורקית"},
-        "INR": {flag: "🇮🇳", name: "רופי הודי"}, "MXN": {flag: "🇲🇽", name: "פסו מקסיקני"}
+        "JPY": {flag: "🇯🇵", name: "יין יפני"}, "THB": {flag: "🇹🇭", name: "באט תאילנדי"}
     };
 
-    let favorites = JSON.parse(localStorage.getItem('favs_pro')) || ["ILS", "USD", "EUR"];
-    let baseCurrency = localStorage.getItem('base_pro') || "ILS";
+    let favorites = JSON.parse(localStorage.getItem('favs_liq')) || ["ILS", "USD", "EUR", "GBP"];
+    let baseCurrency = localStorage.getItem('base_liq') || "ILS";
+    let currentInput = "100";
     let rates = {};
 
     async function fetchRates() {
-        document.getElementById('loader').style.display = 'block';
         try {
             const res = await fetch(`https://api.frankfurter.app/latest?from=${baseCurrency}`);
             const data = await res.json();
             rates = data.rates;
             rates[baseCurrency] = 1;
-            renderFavorites();
-        } catch (e) {
-            console.error("שגיאה בטעינה");
-        }
-        document.getElementById('loader').style.display = 'none';
+            render();
+        } catch (e) { console.error("API Error"); }
     }
 
-    function renderFavorites() {
-        const container = document.getElementById('favoritesList');
-        container.innerHTML = '';
-        const amount = document.getElementById('amount').value || 0;
+    function press(key) {
+        if (key === 'AC') currentInput = "0";
+        else if (key === 'DEL') {
+            currentInput = currentInput.slice(0, -1);
+            if (currentInput === "") currentInput = "0";
+        } else {
+            if (currentInput === "0" && key !== '.') currentInput = key;
+            else if (currentInput.length < 10) currentInput += key;
+        }
+        document.getElementById('display').innerText = currentInput;
+        render();
+    }
+
+    function render() {
+        const grid = document.getElementById('grid');
+        grid.innerHTML = '';
+        const numInput = parseFloat(currentInput) || 0;
+        
+        document.getElementById('baseLabel').innerText = currencyData[baseCurrency].name;
 
         favorites.forEach(code => {
-            const data = currencyData[code] || {flag: "🏳️", name: code};
-            const val = rates[code] ? (amount * rates[code]).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '---';
+            const data = currencyData[code];
+            const val = rates[code] ? (numInput * rates[code]).toLocaleString(undefined, {maximumFractionDigits: 2}) : '...';
             
             const card = document.createElement('div');
-            card.className = `currency-card ${code === baseCurrency ? 'active' : ''}`;
-            card.onclick = () => setBase(code);
+            card.className = `liquid-card ${code === baseCurrency ? 'active' : ''}`;
+            card.onclick = () => {
+                baseCurrency = code;
+                localStorage.setItem('base_liq', code);
+                fetchRates();
+            };
             
             card.innerHTML = `
-                <button class="btn-delete" onclick="removeFav(event, '${code}')">✕</button>
-                <div class="info">
-                    <span class="flag">${data.flag}</span>
-                    <div class="details">
-                        <span class="code">${code}</span>
-                        <span style="font-size:11px; color:#8e8e93">${data.name}</span>
-                    </div>
-                </div>
-                <div class="value-area">
-                    <span class="result-val">${val}</span>
-                </div>
+                <div class="flag">${data.flag}</div>
+                <div class="code">${code}</div>
+                <div class="val">${val}</div>
             `;
-            container.appendChild(card);
+            grid.appendChild(card);
         });
-        localStorage.setItem('favs_pro', JSON.stringify(favorites));
-    }
-
-    function renderAll() {
-        const query = document.getElementById('search').value.toUpperCase();
-        const container = document.getElementById('allList');
-        container.innerHTML = '';
-
-        Object.keys(currencyData).forEach(code => {
-            if (favorites.includes(code)) return;
-            if (query && !code.includes(query) && !currencyData[code].name.includes(query)) return;
-
-            const div = document.createElement('div');
-            div.className = 'add-row';
-            div.innerHTML = `
-                <div class="info">
-                    <span>${currencyData[code].flag}</span>
-                    <span>${code} - ${currencyData[code].name}</span>
-                </div>
-                <button class="btn-add" onclick="addFav('${code}')">+</button>
-            `;
-            container.appendChild(div);
-        });
-    }
-
-    function setBase(code) {
-        baseCurrency = code;
-        localStorage.setItem('base_pro', baseCurrency);
-        fetchRates();
-    }
-
-    function addFav(code) {
-        if (!favorites.includes(code)) {
-            favorites.push(code);
-            renderFavorites();
-            renderAll();
-        }
-    }
-
-    function removeFav(event, code) {
-        event.stopPropagation(); // מונע מהלחיצה להפוך את המטבע לבסיס לפני המחיקה
-        favorites = favorites.filter(f => f !== code);
-        renderFavorites();
-        renderAll();
-    }
-
-    function calculate() {
-        renderFavorites();
     }
 
     fetchRates();
-    renderAll();
 </script>
-
 </body>
 </html>
