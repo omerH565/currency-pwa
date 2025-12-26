@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Currency Liquid</title>
+    <title>Currency Liquid Pro</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <style>
         :root {
-            --glass: rgba(255, 255, 255, 0.2);
-            --glass-border: rgba(255, 255, 255, 0.3);
+            --glass: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.25);
             --text: #ffffff;
             --primary: #007AFF;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
 
         body {
             margin: 0;
@@ -37,147 +37,134 @@
         }
 
         .container {
-            padding: 20px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
             height: 100%;
-            max-width: 500px;
+            max-width: 600px;
             margin: 0 auto;
             width: 100%;
         }
 
-        /* תצוגת סכום */
-        .display-area {
-            text-align: center;
-            padding: 30px 0;
-        }
-
-        .amount-display {
-            font-size: 56px;
-            font-weight: 200;
-            margin: 0;
-            min-height: 70px;
-        }
-
-        .base-label {
-            font-size: 14px;
-            opacity: 0.7;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* גריד המדינות */
+        /* גריד המדינות - 4 בשורה */
         .favorites-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
             overflow-y: auto;
-            padding-bottom: 20px;
+            padding: 20px 5px;
             flex-grow: 1;
+            align-content: start;
         }
 
         .liquid-card {
             background: var(--glass);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 20px;
+            border-radius: 18px;
+            padding: 12px 5px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            transition: transform 0.2s, background 0.2s;
+            transition: all 0.15s ease;
             position: relative;
+            text-align: center;
+            min-height: 90px;
         }
 
         .liquid-card.active {
-            background: rgba(255, 255, 255, 0.4);
-            border: 1px solid #fff;
-            transform: scale(1.02);
+            background: rgba(255, 255, 255, 0.35);
+            border: 1.5px solid #fff;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255,255,255,0.2);
         }
 
-        .liquid-card .flag { font-size: 32px; margin-bottom: 8px; }
-        .liquid-card .code { font-weight: bold; font-size: 18px; }
-        .liquid-card .val { font-size: 16px; opacity: 0.9; margin-top: 4px; }
-
-        .btn-del {
-            position: absolute; top: 8px; right: 8px;
-            background: rgba(255,0,0,0.3); border: none; border-radius: 50%;
-            width: 20px; height: 20px; color: white; font-size: 10px;
-            display: none; align-items: center; justify-content: center;
+        .liquid-card .flag { font-size: 24px; margin-bottom: 4px; }
+        .liquid-card .code { font-weight: 600; font-size: 13px; opacity: 0.8; }
+        .liquid-card .val { 
+            font-size: 14px; 
+            font-weight: bold; 
+            margin-top: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
         }
-        .liquid-card:not(.active):hover .btn-del { display: flex; }
 
-        /* לוח מקשים ליקוויד */
+        /* לוח מקשים */
         .keypad {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            gap: 8px;
             padding: 20px;
-            background: rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(20px);
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(25px);
             border-radius: 30px 30px 0 0;
-            margin: 0 -20px -20px -20px;
+            margin: 0 -15px -15px -15px;
         }
 
         .key {
-            background: var(--glass);
+            background: rgba(255, 255, 255, 0.1);
             border: 1px solid var(--glass-border);
-            border-radius: 15px;
-            padding: 15px;
-            font-size: 20px;
-            font-weight: 500;
+            border-radius: 12px;
+            padding: 18px;
+            font-size: 22px;
+            font-weight: 600;
             color: white;
             text-align: center;
             cursor: pointer;
-            transition: background 0.1s;
+            transition: background 0.05s;
         }
 
-        .key:active { background: rgba(255, 255, 255, 0.4); }
-        .key.action { background: rgba(255, 255, 255, 0.1); color: #ff9500; }
+        .key:active { background: rgba(255, 255, 255, 0.3); transform: scale(0.98); }
+        .key.action { color: #ff9500; font-size: 16px; display: flex; align-items: center; justify-content: center; }
         .key.delete { color: #ff3b30; }
+        .key.ac { grid-column: span 3; background: rgba(255, 255, 255, 0.05); font-size: 14px; padding: 12px; }
 
-        /* הוספה */
-        .add-btn { grid-column: span 2; background: var(--primary); border: none; border-radius: 12px; color: white; padding: 10px; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="display-area">
-        <div class="base-label" id="baseLabel">שקל חדש</div>
-        <div class="amount-display" id="display">100</div>
-    </div>
-
     <div class="favorites-grid" id="grid"></div>
 
     <div class="keypad">
-        <div class="key" onclick="press('1')">1</div>
-        <div class="key" onclick="press('2')">2</div>
         <div class="key" onclick="press('3')">3</div>
-        <div class="key" onclick="press('4')">4</div>
-        <div class="key" onclick="press('5')">5</div>
+        <div class="key" onclick="press('2')">2</div>
+        <div class="key" onclick="press('1')">1</div>
+        
         <div class="key" onclick="press('6')">6</div>
-        <div class="key" onclick="press('7')">7</div>
-        <div class="key" onclick="press('8')">8</div>
+        <div class="key" onclick="press('5')">5</div>
+        <div class="key" onclick="press('4')">4</div>
+        
         <div class="key" onclick="press('9')">9</div>
+        <div class="key" onclick="press('8')">8</div>
+        <div class="key" onclick="press('7')">7</div>
+        
         <div class="key action" onclick="press('.')">.</div>
         <div class="key" onclick="press('0')">0</div>
         <div class="key delete" onclick="press('DEL')">⌫</div>
-        <div class="key action" style="grid-column: span 3;" onclick="press('AC')">איפוס (AC)</div>
+        
+        <div class="key action ac" onclick="press('AC')">איפוס (AC)</div>
     </div>
 </div>
 
 <script>
     const currencyData = {
-        "ILS": {flag: "🇮🇱", name: "שקל חדש"}, "USD": {flag: "🇺🇸", name: "דולר אמריקאי"},
-        "EUR": {flag: "🇪🇺", name: "אירו"}, "GBP": {flag: "🇬🇧", name: "ליש\"ט"},
-        "JPY": {flag: "🇯🇵", name: "יין יפני"}, "THB": {flag: "🇹🇭", name: "באט תאילנדי"}
+        "ILS": {flag: "🇮🇱", name: "שקל", symbol: "₪"},
+        "USD": {flag: "🇺🇸", name: "דולר", symbol: "$"},
+        "EUR": {flag: "🇪🇺", name: "אירו", symbol: "€"},
+        "GBP": {flag: "🇬🇧", name: "ליש\"ט", symbol: "£"},
+        "JPY": {flag: "🇯🇵", name: "יין", symbol: "¥"},
+        "THB": {flag: "🇹🇭", name: "באט", symbol: "฿"},
+        "CAD": {flag: "🇨🇦", name: "קנדי", symbol: "C$"},
+        "AUD": {flag: "🇦🇺", name: "אוסטרלי", symbol: "A$"}
     };
 
-    let favorites = JSON.parse(localStorage.getItem('favs_liq')) || ["ILS", "USD", "EUR", "GBP"];
-    let baseCurrency = localStorage.getItem('base_liq') || "ILS";
+    let favorites = JSON.parse(localStorage.getItem('favs_liq_v2')) || ["ILS", "USD", "EUR", "GBP", "JPY", "THB", "CAD", "AUD"];
+    let baseCurrency = localStorage.getItem('base_liq_v2') || "ILS";
     let currentInput = "100";
     let rates = {};
 
@@ -187,7 +174,7 @@
             const data = await res.json();
             rates = data.rates;
             rates[baseCurrency] = 1;
-            render();
+            renderGrid();
         } catch (e) { console.error("API Error"); }
     }
 
@@ -198,40 +185,63 @@
             if (currentInput === "") currentInput = "0";
         } else {
             if (currentInput === "0" && key !== '.') currentInput = key;
-            else if (currentInput.length < 10) currentInput += key;
+            else if (currentInput.length < 9) currentInput += key;
         }
-        document.getElementById('display').innerText = currentInput;
-        render();
+        
+        // עדכון מהיר של הערכים ללא רינדור מחדש של ה-DOM
+        updateValuesOnly();
     }
 
-    function render() {
+    function renderGrid() {
         const grid = document.getElementById('grid');
         grid.innerHTML = '';
-        const numInput = parseFloat(currentInput) || 0;
         
-        document.getElementById('baseLabel').innerText = currencyData[baseCurrency].name;
-
         favorites.forEach(code => {
             const data = currencyData[code];
-            const val = rates[code] ? (numInput * rates[code]).toLocaleString(undefined, {maximumFractionDigits: 2}) : '...';
-            
             const card = document.createElement('div');
             card.className = `liquid-card ${code === baseCurrency ? 'active' : ''}`;
-            card.onclick = () => {
-                baseCurrency = code;
-                localStorage.setItem('base_liq', code);
-                fetchRates();
-            };
+            card.id = `card-${code}`;
+            card.onclick = () => selectBase(code);
             
             card.innerHTML = `
                 <div class="flag">${data.flag}</div>
                 <div class="code">${code}</div>
-                <div class="val">${val}</div>
+                <div class="val" id="val-${code}">---</div>
             `;
             grid.appendChild(card);
         });
+        updateValuesOnly();
     }
 
+    function updateValuesOnly() {
+        const numInput = parseFloat(currentInput) || 0;
+        favorites.forEach(code => {
+            const displayVal = document.getElementById(`val-${code}`);
+            if (displayVal) {
+                const symbol = currencyData[code].symbol;
+                if (code === baseCurrency) {
+                    displayVal.innerText = symbol + numInput;
+                } else {
+                    const converted = rates[code] ? (numInput * rates[code]).toFixed(2) : '...';
+                    displayVal.innerText = symbol + converted;
+                }
+            }
+        });
+    }
+
+    function selectBase(code) {
+        if (baseCurrency === code) return;
+        baseCurrency = code;
+        localStorage.setItem('base_liq_v2', code);
+        
+        // סימון ויזואלי מיידי
+        document.querySelectorAll('.liquid-card').forEach(c => c.classList.remove('active'));
+        document.getElementById(`card-${code}`).classList.add('active');
+        
+        fetchRates();
+    }
+
+    // אתחול
     fetchRates();
 </script>
 </body>
